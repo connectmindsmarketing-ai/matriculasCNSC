@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Matrículas - Colégio N. Sra. da Conceição</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <!-- Babel (para ler o código JSX no navegador) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Recharts (Gráficos) -->
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Importando os componentes do Recharts da janela global
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, ComposedChart, Cell } = window.Recharts;
+        const { useState } = React;
+
+        // Ícones SVG embutidos (substituindo a biblioteca externa para funcionar em 1 arquivo)
+        const IconCheckCircle = ({ className, size=24 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+        const IconMegaphone = ({ className, size=24 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg>;
+        const IconPhoneMissed = ({ className, size=24 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" x2="16" y1="2" y2="8"></line><line x1="16" x2="22" y1="2" y2="8"></line><path d="M10.6 9H2v.5C2 17 9 24 17.5 24h.5v-8.6l-3.1-3.1a2 2 0 0 0-2.8 0l-1.5 1.5a13 13 0 0 1-5.3-5.3l1.5-1.5a2 2 0 0 0 0-2.8L10.6 9Z"></path></svg>;
+        const IconTarget = ({ className, size=24 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>;
+        const IconAlertTriangle = ({ className, size=24 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" x2="12" y1="9" y2="13"></line><line x1="12" x2="12.01" y1="17" y2="17"></line></svg>;
+        const IconTrendingUp = ({ className, size=24 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>;
+        const IconTrendingDown = ({ className, size=24 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>;
+
+        const App = () => {
+            const macroData = [
+                { year: '2024', alunosCasa: 602, alunosNovos: 151, procura: 256, conversao: 59.77 },
+                { year: '2025', alunosCasa: 614, alunosNovos: 160, procura: 273, conversao: 60.07 },
+                { year: '2026', alunosCasa: 625, alunosNovos: 135, procura: 301, conversao: 45.18 }
+            ];
+
+            const segmentData = [
+                {
+                    segment: 'Educação Infantil',
+                    '2024_procura': 54, '2024_mat': 26, '2024_conv': 48.1,
+                    '2025_procura': 44, '2025_mat': 22, '2025_conv': 50.0,
+                    '2026_procura': 47, '2026_mat': 14, '2026_conv': 29.8
+                },
+                {
+                    segment: 'Anos Iniciais',
+                    '2024_procura': 80, '2024_mat': 49, '2024_conv': 61.3,
+                    '2025_procura': 107, '2025_mat': 59, '2025_conv': 55.1,
+                    '2026_procura': 114, '2026_mat': 46, '2026_conv': 40.4
+                },
+                {
+                    segment: 'Anos Finais',
+                    '2024_procura': 92, '2024_mat': 61, '2024_conv': 66.3,
+                    '2025_procura': 86, '2025_mat': 58, '2025_conv': 67.4,
+                    '2026_procura': 111, '2026_mat': 62, '2026_conv': 55.9
+                },
+                {
+                    segment: 'Ensino Médio',
+                    '2024_procura': 30, '2024_mat': 17, '2024_conv': 56.7,
+                    '2025_procura': 36, '2025_mat': 25, '2025_conv': 69.4,
+                    '2026_procura': 26, '2026_mat': 12, '2026_conv': 46.2
+                }
+            ];
+
+            const KpiCard = ({ title, value, subtitle, icon, trend, type }) => {
+                const isPositive = trend === 'up';
+                const colorClasses = {
+                    success: 'bg-green-50 border-green-200 text-green-700',
+                    danger: 'bg-red-50 border-red-200 text-red-700',
+                    info: 'bg-blue-50 border-blue-200 text-blue-700'
+                };
+
+                return (
+                    <div className={`p-6 rounded-2xl border ${colorClasses[type]} shadow-sm flex flex-col justify-between h-full`}>
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <p className="text-sm font-semibold opacity-80 uppercase tracking-wider">{title}</p>
+                                <h3 className="text-3xl font-bold mt-1">{value}</h3>
+                            </div>
+                            <div className={`p-3 rounded-full bg-white bg-opacity-50`}>
+                                {icon}
+                            </div>
+                        </div>
+                        <div className="flex items-center text-sm font-medium">
+                            {isPositive ? <IconTrendingUp size={16} className="mr-1" /> : <IconTrendingDown size={16} className="mr-1" />}
+                            {subtitle}
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
+                    
+                    <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-slate-800">Dashboard de Matrículas</h1>
+                            <p className="text-slate-500 mt-1 text-lg">Colégio Nossa Senhora da Conceição (2024 - 2026)</p>
+                        </div>
+                        <div className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md font-medium flex items-center gap-2">
+                            <IconTarget size={20} />
+                            <span>Análise de Performance Comercial</span>
+                        </div>
+                    </header>
+
+                    {/* Bloco 1: Retenção */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="lg:col-span-1 flex flex-col">
+                            <KpiCard 
+                                title="Retenção (Alunos da Casa)" 
+                                value="625" 
+                                subtitle="+11 em relação a 2025" 
+                                icon={<IconCheckCircle size={28} className="text-green-600" />} 
+                                trend="up" 
+                                type="success" 
+                            />
+                        </div>
+                        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800 mb-6 text-center">Evolução da Retenção (Alunos)</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={macroData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                        <XAxis dataKey="year" axisLine={false} tickLine={false} />
+                                        <YAxis axisLine={false} tickLine={false} domain={[0, 700]} />
+                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                        <Bar dataKey="alunosCasa" name="Alunos da Casa" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={50} label={{ position: 'top', fill: '#065f46', fontWeight: 'bold' }} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bloco 2: Demanda */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="lg:col-span-1 flex flex-col">
+                            <KpiCard 
+                                title="Geração de Demanda (Procura)" 
+                                value="301" 
+                                subtitle="+28 contatos em relação a 2025" 
+                                icon={<IconMegaphone size={28} className="text-blue-600" />} 
+                                trend="up" 
+                                type="info" 
+                            />
+                        </div>
+                        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800 mb-6 text-center">Evolução do Funil: Procura vs. Matrículas</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={macroData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                        <XAxis dataKey="year" axisLine={false} tickLine={false} />
+                                        <YAxis axisLine={false} tickLine={false} />
+                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                        <Legend verticalAlign="top" height={36}/>
+                                        <Bar dataKey="procura" name="Procura (Leads)" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} label={{ position: 'top', fill: '#4f46e5', fontWeight: 'bold' }} />
+                                        <Bar dataKey="alunosNovos" name="Matriculados (Novos)" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={50} label={{ position: 'top', fill: '#d97706', fontWeight: 'bold' }} />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bloco 3: Conversão */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="lg:col-span-1 flex flex-col">
+                            <KpiCard 
+                                title="Taxa de Conversão Geral" 
+                                value="45,18%" 
+                                subtitle="-14,89% em relação a 2025" 
+                                icon={<IconPhoneMissed size={28} className="text-red-600" />} 
+                                trend="down" 
+                                type="danger" 
+                            />
+                        </div>
+                        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800 mb-6 text-center">Queda na Taxa de Conversão Geral (%)</h3>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={macroData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                        <XAxis dataKey="year" axisLine={false} tickLine={false} />
+                                        <YAxis domain={[0, 80]} axisLine={false} tickLine={false} tickFormatter={(value) => `${value}%`} />
+                                        <Tooltip formatter={(value) => `${value}%`} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                        <Line type="monotone" dataKey="conversao" name="Taxa de Conversão" stroke="#ef4444" strokeWidth={4} dot={{ r: 6, fill: '#ef4444', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} label={{ position: 'top', formatter: (val) => `${val}%`, fill: '#ef4444', fontWeight: 'bold' }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Diagnóstico Estratégico */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <IconAlertTriangle className="text-orange-500" />
+                            Diagnóstico Estratégico: Marketing vs. Vendas
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                                <h3 className="font-bold text-green-800 mb-2 flex items-center gap-2">
+                                    <IconTrendingUp size={18} /> O que funcionou (Marketing)
+                                </h3>
+                                <p className="text-green-900 text-sm leading-relaxed">
+                                    As campanhas de 2026 foram as mais eficazes do triênio na atração e relacionamento. Tivemos o <strong>maior pico de retenção histórica (625 alunos da casa)</strong> e a <strong>maior geração de leads/procura (301 contatos)</strong>. A marca atraiu os clientes com sucesso.
+                                </p>
+                            </div>
+                            <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                                <h3 className="font-bold text-red-800 mb-2 flex items-center gap-2">
+                                    <IconTrendingDown size={18} /> O Gargalo (Comercial/Vendas)
+                                </h3>
+                                <p className="text-red-900 text-sm leading-relaxed">
+                                    Apesar do alto volume de interessados, as matrículas de novos alunos caíram para 135 (vs 160 em 2025). Isso se deve a uma <strong>queda brusca na taxa de conversão (de 60% para 45%)</strong>. A demanda foi gerada, mas o fechamento comercial não acompanhou.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tabela de Segmentos */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="p-6 border-b border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-800">Detalhamento por Segmento (2024 - 2026)</h3>
+                            <p className="text-sm text-gray-500 mt-1">Análise minuciosa de onde a conversão sofreu as maiores quedas no funil comercial.</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left text-gray-600">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                    <tr>
+                                        <th rowSpan="2" className="px-6 py-4 border-r border-gray-200">Segmento</th>
+                                        <th colSpan="3" className="px-6 py-2 text-center border-b border-r border-gray-200">2024</th>
+                                        <th colSpan="3" className="px-6 py-2 text-center border-b border-r border-gray-200">2025</th>
+                                        <th colSpan="3" className="px-6 py-2 text-center border-b border-gray-200 bg-red-50 text-red-800">2026 (Ano do Gargalo)</th>
+                                    </tr>
+                                    <tr>
+                                        <th className="px-3 py-2 text-center text-blue-600">Procura</th>
+                                        <th className="px-3 py-2 text-center text-green-600">Matric.</th>
+                                        <th className="px-3 py-2 text-center border-r border-gray-200">Conv.</th>
+                                        <th className="px-3 py-2 text-center text-blue-600">Procura</th>
+                                        <th className="px-3 py-2 text-center text-green-600">Matric.</th>
+                                        <th className="px-3 py-2 text-center border-r border-gray-200">Conv.</th>
+                                        <th className="px-3 py-2 text-center text-blue-800 bg-red-50">Procura</th>
+                                        <th className="px-3 py-2 text-center text-green-800 bg-red-50">Matric.</th>
+                                        <th className="px-3 py-2 text-center font-bold text-red-600 bg-red-50">Conv.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {segmentData.map((row, index) => (
+                                        <tr key={index} className="bg-white border-b hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-gray-900 border-r border-gray-200 whitespace-nowrap">{row.segment}</td>
+                                            <td className="px-3 py-3 text-center">{row['2024_procura']}</td>
+                                            <td className="px-3 py-3 text-center">{row['2024_mat']}</td>
+                                            <td className="px-3 py-3 text-center border-r border-gray-200">{row['2024_conv']}%</td>
+                                            <td className="px-3 py-3 text-center">{row['2025_procura']}</td>
+                                            <td className="px-3 py-3 text-center">{row['2025_mat']}</td>
+                                            <td className="px-3 py-3 text-center border-r border-gray-200">{row['2025_conv']}%</td>
+                                            <td className="px-3 py-3 text-center bg-red-50/30">{row['2026_procura']}</td>
+                                            <td className="px-3 py-3 text-center bg-red-50/30">{row['2026_mat']}</td>
+                                            <td className="px-3 py-3 text-center font-bold text-red-600 bg-red-50/30">{row['2026_conv']}%</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Gráficos Segmentados */}
+                    <div className="mt-8 mb-4">
+                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                            <IconTarget className="text-indigo-600" />
+                            Evolução da Conversão por Segmento (Ano a Ano)
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {segmentData.map((seg, idx) => {
+                                const chartData = [
+                                    { year: '2024', conversao: seg['2024_conv'] },
+                                    { year: '2025', conversao: seg['2025_conv'] },
+                                    { year: '2026', conversao: seg['2026_conv'] }
+                                ];
+                                
+                                const getBarColor = (entryYear, currentConv) => {
+                                   if (entryYear === '2026' && currentConv < seg['2025_conv']) return '#ef4444'; 
+                                   if (entryYear === '2026') return '#10b981'; 
+                                   return '#94a3b8'; 
+                                };
+
+                                return (
+                                    <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                                        <h3 className="text-md font-bold text-gray-800 mb-4 text-center">{seg.segment}</h3>
+                                        <div className="h-48">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={chartData} margin={{ top: 20, right: 5, left: -25, bottom: 0 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                    <XAxis dataKey="year" axisLine={false} tickLine={false} fontSize={12} />
+                                                    <YAxis domain={[0, 100]} axisLine={false} tickLine={false} fontSize={12} tickFormatter={(val) => `${val}%`} />
+                                                    <Tooltip formatter={(value) => `${value}%`} />
+                                                    <Bar dataKey="conversao" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', formatter: (val) => `${val}%`, fontSize: 11, fontWeight: 'bold', fill: '#4b5563' }}>
+                                                        {chartData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={getBarColor(entry.year, entry.conversao)} />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
