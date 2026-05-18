@@ -67,6 +67,19 @@
                 }
             ];
 
+            // Dados extraídos do gráfico de longo prazo
+            const evolucaoAlunosData = [
+                { year: '2017', alunos: 1135 },
+                { year: '2018', alunos: 1070 },
+                { year: '2019', alunos: 1022 },
+                { year: '2020', alunos: 996 },
+                { year: '2021', alunos: 865 },
+                { year: '2022', alunos: 816 },
+                { year: '2023', alunos: 787 },
+                { year: '2024', alunos: 735 },
+                { year: '2025', alunos: 752 }
+            ];
+
             const KpiCard = ({ title, value, subtitle, icon, trend, type }) => {
                 const isPositive = trend === 'up';
                 const colorClasses = {
@@ -217,6 +230,34 @@
                                     Apesar do alto volume de interessados, as matrículas de novos alunos caíram para 135 (vs 160 em 2025). Isso se deve a uma <strong>queda brusca na taxa de conversão (de 60% para 45%)</strong>. A demanda foi gerada, mas o fechamento comercial não acompanhou.
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Evolução Histórica de Alunos (Novo Gráfico) */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+                        <div className="mb-8 text-center">
+                            <h3 className="text-xl font-bold text-gray-800">Evolução do Nº de Alunos (2017 - 2025)</h3>
+                            <p className="text-sm text-gray-500 mt-1">Visão histórica consolidada, evidenciando o estancamento da longa curva de queda e a inversão positiva iniciada a partir de 2025.</p>
+                        </div>
+                        <div className="h-80">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={evolucaoAlunosData} margin={{ top: 25, right: 30, left: 10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis dataKey="year" axisLine={false} tickLine={false} />
+                                    <YAxis domain={[700, 1200]} axisLine={false} tickLine={false} tickCount={6} />
+                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="alunos" 
+                                        name="Total de Alunos" 
+                                        stroke="#1e293b" 
+                                        strokeWidth={4} 
+                                        dot={{ r: 6, fill: '#1e293b', strokeWidth: 2, stroke: '#fff' }} 
+                                        activeDot={{ r: 8 }} 
+                                        label={{ position: 'top', fill: '#475569', fontWeight: 'bold', fontSize: 12, dy: -10 }} 
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
 
